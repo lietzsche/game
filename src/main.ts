@@ -104,7 +104,10 @@ class SamuraiScene extends Phaser.Scene {
   update() {
     // 이미 공격 중이라면 다른 동작 불가
     if (this.isAttacking) {
-      this.player.setVelocityX(0); // 공격 중 이동 불가
+      // 땅에서 공격 중일 때만 멈춰서고, 공중 공격 시에는 관성을 유지
+      if (this.player.body.blocked.down) {
+        this.player.setVelocityX(0);
+      }
       return;
     }
 
@@ -118,8 +121,8 @@ class SamuraiScene extends Phaser.Scene {
       this.isBlocking = false;
     }
 
-    // 공격 로직 (스페이스바)
-    if (Phaser.Input.Keyboard.JustDown(this.attackKey) && this.player.body.blocked.down) {
+    // 공격 로직 (스페이스바) - 공중에서도 가능하도록 blocked.down 조건 제거
+    if (Phaser.Input.Keyboard.JustDown(this.attackKey)) {
       this.isAttacking = true;
       this.player.anims.play('attack', true);
 
