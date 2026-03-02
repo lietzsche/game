@@ -9,6 +9,9 @@ class SamuraiScene extends Phaser.Scene {
   private isAttacking: boolean = false;
   private isBlocking: boolean = false;
 
+  // 클래스 멤버 변수 추가
+  private hitboxes!: Phaser.Physics.Arcade.Group;
+
   constructor() {
     super('SamuraiScene');
   }
@@ -32,6 +35,9 @@ class SamuraiScene extends Phaser.Scene {
     this.player.setSize(50, 120);
     // 화면 크기에 맞게 스케일 조정 (160px면 꽤 크므로 약간 줄임)
     this.player.setScale(0.8);
+
+    // 히트박스 그룹 생성 (탄환이나 타격 판정을 관리하기 쉬움)
+    this.hitboxes = this.physics.add.group();
 
     // 3. 애니메이션 설정
 
@@ -90,6 +96,8 @@ class SamuraiScene extends Phaser.Scene {
     // 애니메이션 완료 이벤트 (공격 끝날 때 처리)
     this.player.on('animationcomplete-attack', () => {
       this.isAttacking = false;
+      // 공격이 끝나면 히트박스 제거
+      this.hitboxes.clear(true, true);
     });
   }
 
@@ -114,6 +122,31 @@ class SamuraiScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.attackKey) && this.player.body.blocked.down) {
       this.isAttacking = true;
       this.player.anims.play('attack', true);
+
+      // 타격감: 카메라 살짝 흔들기 (duration, intensity)
+      this.cameras.main.shake(100, 0.005);
+
+      // 히트박스 생성 위치 계산 (바라보는 방향에 따라)
+      const isFacingLeft = this.player.flipX;
+      // 플레이어 중심에서 약간 앞(방향에 따라 - 또는 +)에 히트박스 배치
+      const offsetX = isFacingLeft ? -40 : 40;
+
+      const hitbox = this.add.rectangle(
+        this.player.x + offsetX,
+        this.player.y,
+        60, // 너비 
+        80, // 높이
+        0xff0000,
+        0.3 // 투명도 (개발중에만 보이게 0.3, 완성시 0)
+      ) as unknown as Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+
+      // 히트박스에 물리 엔진 속성 부여
+      this.physics.add.existing(hitbox);
+      // 히트박스는 중력의 영향을 받지 않고 그 자리에 고정되도록
+      hitbox.body.setAllowGravity(false);
+
+      this.hitboxes.add(hitbox);
+
       return;
     }
 
