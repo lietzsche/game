@@ -5,7 +5,7 @@ class SamuraiScene extends Phaser.Scene {
   private player!: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private attackKey!: Phaser.Input.Keyboard.Key;
-  private blockKey!: Phaser.Input.Keyboard.Key;
+  private dashKey!: Phaser.Input.Keyboard.Key;
   private isAttacking: boolean = false;
   private isBlocking: boolean = false;
 
@@ -59,18 +59,19 @@ class SamuraiScene extends Phaser.Scene {
       repeat: 0 // 반복하지 않음
     });
 
-    // 점프/방어 등 - 네 번째 줄 활용
+    // 점프/방어 등 - 네 번째 줄 활용하지만 칼질 안하는 프레임 찾기
+    // (보통 1, 5번 프레임이 공중에 떠있는 느낌을 줄 수 있습니다)
     this.anims.create({
       key: 'jump',
-      frames: this.anims.generateFrameNumbers('samurai', { frames: [12, 13] }),
-      frameRate: 5,
+      frames: [{ key: 'samurai', frame: 5 }], // 뛰는 동작 중 하나를 점프로 사용
+      frameRate: 10,
       repeat: -1
     });
 
     // 방어 (Block)
     this.anims.create({
       key: 'block',
-      frames: [{ key: 'samurai', frame: 14 }],
+      frames: [{ key: 'samurai', frame: 14 }], // 14번 대신 다른 게 나을 수도 있지만 일단 유지
       frameRate: 20
     });
 
@@ -82,8 +83,8 @@ class SamuraiScene extends Phaser.Scene {
       this.cursors = this.input.keyboard.createCursorKeys();
       // 스페이스바로 공격
       this.attackKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-      // 쉬프트키로 막기
-      this.blockKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+      // 쉬프트키로 달리기 (Dash)
+      this.dashKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
     }
 
     // 애니메이션 완료 이벤트 (공격 끝날 때 처리)
@@ -99,8 +100,8 @@ class SamuraiScene extends Phaser.Scene {
       return;
     }
 
-    // 방어 로직 (쉬프트키 누르고 있을 때)
-    if (this.blockKey.isDown && this.player.body.blocked.down) {
+    // 방어 로직 (아래 방향키 누르고 있을 때)
+    if (this.cursors.down.isDown && this.player.body.blocked.down) {
       this.isBlocking = true;
       this.player.setVelocityX(0); // 방어 중 이동 불가
       this.player.anims.play('block', true);
@@ -116,19 +117,26 @@ class SamuraiScene extends Phaser.Scene {
       return;
     }
 
+    // 달리기 속도 설정 (Shift 누르면 350, 아니면 기본 걷기 180)
+    const speed = this.dashKey.isDown ? 350 : 180;
+    // 달리기 중이면 애니메이션 속도도 빠르게
+    const animSpeedMultiplier = this.dashKey.isDown ? 1.5 : 1;
+
     // 이동 로직
     if (this.cursors.left.isDown) {
-      this.player.setVelocityX(-160);
+      this.player.setVelocityX(-speed);
       this.player.setFlipX(true); // 왼쪽을 보게 이미지 반전
       if (this.player.body.blocked.down) {
         this.player.anims.play('run', true);
+        this.player.anims.msPerFrame = 100 / animSpeedMultiplier; // 애니메이션 속도 조절
       }
     }
     else if (this.cursors.right.isDown) {
-      this.player.setVelocityX(160);
+      this.player.setVelocityX(speed);
       this.player.setFlipX(false); // 오른쪽을 보게 이미지 원상복구
       if (this.player.body.blocked.down) {
         this.player.anims.play('run', true);
+        this.player.anims.msPerFrame = 100 / animSpeedMultiplier; // 애니메이션 속도 조절
       }
     }
     else {
@@ -145,7 +153,7 @@ class SamuraiScene extends Phaser.Scene {
 
     // 점프 (바닥에 닿아있을 때만 가능)
     if (this.cursors.up.isDown && this.player.body.blocked.down) {
-      this.player.setVelocityY(-330);
+      this.player.setVelocityY(-400); // 점프력도 살짝 상향
     }
   }
 }
