@@ -117,11 +117,18 @@ const AdminPanel = ({ stages, onSave, onAdd, onDelete, onClose, onImport, onExpo
                           <input value={opt.text} onChange={(e) => { const newOpts = [...editingStage.options]; newOpts[idx].text = e.target.value; setEditingStage({...editingStage, options: newOpts}); }} className="w-full bg-black border border-emerald-900 p-2 text-xs rounded-lg outline-none focus:border-emerald-700 transition-colors" />
                         </div> 
                         <div className="space-y-1">
-                          <label className="text-[8px] opacity-30 uppercase font-bold">Destination ID</label>
-                          <input list="stage-list" value={opt.next} onChange={(e) => { const newOpts = [...editingStage.options]; newOpts[idx].next = e.target.value; setEditingStage({...editingStage, options: newOpts}); }} className="w-full bg-black border border-emerald-900 p-2 text-xs rounded-lg outline-none focus:border-emerald-700 transition-colors" />
-                          <datalist id="stage-list">
-                            {stages.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
-                          </datalist>
+                          <label className="text-[8px] opacity-30 uppercase font-bold">Destination</label>
+                          <select 
+                            value={opt.next} 
+                            onChange={(e) => { const newOpts = [...editingStage.options]; newOpts[idx].next = e.target.value; setEditingStage({...editingStage, options: newOpts}); }} 
+                            className="w-full bg-black border border-emerald-900 p-2 text-xs rounded-lg outline-none focus:border-emerald-700 transition-colors cursor-pointer text-emerald-100"
+                          >
+                            {stages.map(s => (
+                              <option key={s.id} value={s.id}>
+                                {s.title} ({s.id})
+                              </option>
+                            ))}
+                          </select>
                         </div>
                       </div>
                       <div className="grid grid-cols-3 gap-3">
