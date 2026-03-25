@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Terminal, Cpu, Ghost, Brain, Zap, ChevronRight, AlertTriangle, RefreshCw, Settings, Save, Plus, Trash2, X, Download, Upload, History, Database, ShieldAlert, Lock } from 'lucide-react';
+import { Terminal, Cpu, Ghost, Brain, Zap, ChevronRight, AlertTriangle, RefreshCw, Settings, Save, Plus, Trash2, X, Download, Upload, History as HistoryIcon, Database, ShieldAlert, Lock, ArrowLeft } from 'lucide-react';
 
-// Default Game Content (Initial Seed)
+// Default Game Content
 const INITIAL_STAGES = [
   {
     id: 'boot',
@@ -58,7 +58,7 @@ const INITIAL_STAGES = [
   {
     id: 'ending_ethical',
     title: '엔딩: 윤리적 주체',
-    description: '당신은 효율성보다 타자를 선택했습니다. 산소 농도는 낮아졌지만, 당신은 비로소 "인간"이 되었습니다. 레비나스가 말한 무한한 책임의 길입니다.',
+    description: '당신은 효율성보다 타자를 선택했습니다. 당신은 비로소 "인간"이 되었습니다. 레비나스가 말한 무한한 책임의 길입니다.',
     isEnding: true
   },
   {
@@ -76,7 +76,7 @@ const INITIAL_STAGES = [
   {
     id: 'ending_human',
     title: '엔딩: 필멸자의 평화',
-    description: '당신은 거대한 진리 대신 인간의 유한함을 선택했습니다. 시스템은 침묵하지만, 기지의 공기는 어느 때보다 달콤합니다.',
+    description: '당신은 거대한 진리 대신 인간의 유한함을 선택했습니다. 기지의 공기는 어느 때보다 달콤합니다.',
     isEnding: true
   },
   {
@@ -105,12 +105,14 @@ const App = () => {
   const [stability, setStability] = useState(100);
   const [isTyping, setIsTyping] = useState(false);
   const [displayText, setDisplayText] = useState("");
-  const scrollRef = useRef(null);
-  const fileInputRef = useRef(null);
-
-  // --- Admin State ---
+  
+  // --- UI State ---
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isLogOpen, setIsLogOpen] = useState(false);
   const [editingStage, setEditingStage] = useState(null);
+  
+  const fileInputRef = useRef(null);
+  const logScrollRef = useRef(null);
 
   // --- Computed Stats ---
   const traitStats = useMemo(() => {
@@ -124,7 +126,7 @@ const App = () => {
     stages.find(s => s.id === currentStageId) || stages[0],
   [stages, currentStageId]);
 
-  // --- Typewriter Effect & Auto Scroll ---
+  // --- Typewriter Effect ---
   useEffect(() => {
     let index = 0;
     setDisplayText("");
@@ -135,25 +137,14 @@ const App = () => {
       if (index < targetText.length) {
         setDisplayText(prev => prev + targetText.charAt(index));
         index++;
-        // Real-time scrolling during typing
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
       } else {
         clearInterval(timer);
         setIsTyping(false);
       }
-    }, 20); // Typing speed
+    }, 20);
 
     return () => clearInterval(timer);
   }, [currentStageId, currentStage]);
-
-  // Ensure scroll stays at bottom on history change
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-    }
-  }, [history]);
 
   useEffect(() => {
     localStorage.setItem('ontological_stages', JSON.stringify(stages));
@@ -162,29 +153,24 @@ const App = () => {
   const handleOptionClick = (option) => {
     if (isTyping) return;
     
-    // Check Requirement
     if (option.requirement) {
       const currentCount = traitStats[option.requirement.trait] || 0;
       if (currentCount < option.requirement.min) return;
     }
 
-    // 1. Add current state to history before moving
+    // Record to history before moving
     setHistory(prev => [...prev, { 
-      type: 'stage', 
-      title: currentStage.title, 
-      text: currentStage.description 
-    }, { 
-      type: 'action', 
-      text: option.text 
+      stageTitle: currentStage.title, 
+      actionText: option.text,
+      timestamp: new Date().toLocaleTimeString([], {hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit'})
     }]);
 
     setTraits(prev => [...prev, option.trait]);
     setStability(prev => Math.max(0, Math.min(100, prev + (option.stabilityImpact || 0))));
     
-    // 2. Transition to next stage with a small delay for "pacing"
     setTimeout(() => {
       setCurrentStageId(option.next);
-    }, 300);
+    }, 200);
   };
 
   const restartGame = () => {
@@ -194,7 +180,7 @@ const App = () => {
     setStability(100);
   };
 
-  // --- Admin Logic (Same as before) ---
+  // --- Admin Logic ---
   const saveStage = (updatedStage) => {
     setStages(prev => prev.map(s => s.id === updatedStage.id ? updatedStage : s));
     setEditingStage(null);
@@ -246,7 +232,8 @@ const App = () => {
   const isCritical = stability < 15;
 
   return (
-    <div className={`min-h-screen bg-slate-950 text-emerald-500 font-mono p-4 md:p-8 flex flex-col items-center overflow-x-hidden selection:bg-emerald-500/30 ${isCritical ? 'animate-glitch-heavy' : isGlitched ? 'animate-glitch-light' : ''}`}>
+    <div className={`min-h-screen bg-slate-950 text-emerald-500 font-mono p-4 md:p-8 flex flex-col items-center overflow-hidden selection:bg-emerald-500/30 ${isCritical ? 'animate-glitch-heavy' : isGlitched ? 'animate-glitch-light' : ''}`}>
+      
       {/* Background Pulse */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0">
         <div className={`absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] ${isCritical ? 'from-red-500' : 'from-emerald-500'} via-transparent to-transparent animate-pulse`} />
@@ -259,93 +246,131 @@ const App = () => {
           <div>
             <h1 className="text-xl font-black tracking-tighter">ONTOLOGICAL_DEBUGGER</h1>
             <div className="flex items-center gap-2 opacity-40 text-[10px] uppercase font-bold">
-              <span>Status: {isCritical ? 'CRITICAL' : isGlitched ? 'UNSTABLE' : 'STABLE'}</span>
-              <span className={`w-1 h-1 rounded-full ${stability > 70 ? 'bg-emerald-500' : stability > 30 ? 'bg-yellow-500' : 'bg-red-500 animate-ping'}`} />
+              <span>{isCritical ? 'SYSTEM_CRITICAL' : isGlitched ? 'SYSTEM_UNSTABLE' : 'SYSTEM_STABLE'}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${stability > 70 ? 'bg-emerald-500' : stability > 30 ? 'bg-yellow-500' : 'bg-red-500 animate-ping'}`} />
             </div>
           </div>
         </div>
-        <button onClick={() => setIsAdminOpen(true)} className="p-2 hover:bg-emerald-500/10 rounded-lg transition-all text-emerald-800"><Settings className="w-5 h-5" /></button>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setIsLogOpen(true)}
+            className="p-2 hover:bg-emerald-500/10 rounded-lg transition-all text-emerald-600 flex items-center gap-2"
+            title="시스템 로그 보기"
+          >
+            <HistoryIcon className="w-5 h-5" />
+            <span className="hidden sm:inline text-[10px] font-bold tracking-widest uppercase">Logs</span>
+          </button>
+          <button onClick={() => setIsAdminOpen(true)} className="p-2 hover:bg-emerald-500/10 rounded-lg transition-all text-emerald-800"><Settings className="w-5 h-5" /></button>
+        </div>
       </div>
 
-      {/* Main Terminal Container */}
-      <div 
-        ref={scrollRef}
-        className={`w-full max-w-2xl flex-1 bg-black/60 backdrop-blur-md border rounded-xl p-6 md:p-8 overflow-y-auto custom-scrollbar relative z-10 transition-all duration-500 ${isCritical ? 'border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.1)]' : 'border-emerald-900/50 shadow-[0_0_30px_rgba(16,185,129,0.03)]'}`}
-        style={{ minHeight: '480px' }}
-      >
-        {/* Render History as archived logs */}
-        {history.map((h, i) => (
-          <div key={i} className={`mb-6 border-l border-emerald-900/20 pl-4 ${h.type === 'action' ? 'text-blue-400 italic' : 'text-emerald-800 opacity-50'}`}>
-            {h.type === 'stage' && <div className="text-[10px] uppercase font-black mb-1 tracking-widest">{h.title}</div>}
-            <div className="text-sm">
-              <span className="opacity-20 mr-2 text-[10px] tracking-widest">{h.type === 'action' ? "> RESPONSE_" : "> ARCHIVE_"}</span>
-              {h.text}
-            </div>
-          </div>
-        ))}
-
-        {/* Current Active Content */}
-        <div className={`mt-8 pb-20 ${isGlitched ? 'glitch-text' : ''}`}>
-          <div className="flex items-center gap-3 mb-4 opacity-50">
-            <div className="bg-emerald-500/20 px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase text-emerald-400">ACTIVE_PROCESS</div>
+      {/* Main Container - Always Focused */}
+      <div className={`w-full max-w-2xl flex-1 flex flex-col justify-center bg-black/40 backdrop-blur-sm border rounded-3xl p-8 md:p-12 relative z-10 transition-all duration-500 ${isCritical ? 'border-red-500/40 shadow-[0_0_50px_rgba(239,68,68,0.1)]' : 'border-emerald-900/30 shadow-[0_0_50px_rgba(16,185,129,0.02)]'}`}>
+        <div className={`animate-in fade-in duration-1000 ${isGlitched ? 'glitch-text' : ''}`}>
+          <div className="flex items-center gap-3 mb-6 opacity-30">
+            <div className="bg-emerald-500/20 px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase text-emerald-400">Process_Active</div>
             <div className="h-px flex-1 bg-emerald-900/30" />
           </div>
 
-          <h2 className={`text-lg md:text-xl mb-4 flex items-center gap-3 font-black uppercase tracking-widest ${currentStage?.isEnding ? 'text-yellow-500' : 'text-emerald-400'}`}>
-            {currentStage?.isEnding ? <Zap className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+          <h2 className={`text-xl md:text-3xl mb-6 font-black uppercase tracking-tighter leading-tight ${currentStage?.isEnding ? 'text-yellow-500' : 'text-emerald-400'}`}>
+            {currentStage?.isEnding ? <Zap className="inline w-8 h-8 mr-3 mb-1" /> : <ChevronRight className="inline w-8 h-8 mr-1 mb-1" />}
             {currentStage?.title}
           </h2>
           
-          <p className="leading-relaxed mb-10 text-emerald-100/90 text-lg border-l-2 border-emerald-500/50 pl-6 whitespace-pre-wrap min-h-[1.5em]">
-            {displayText}
-            {isTyping && <span className="inline-block w-2 h-5 bg-emerald-500 ml-1 animate-pulse" />}
-          </p>
+          <div className="min-h-[180px] md:min-h-[220px]">
+            <p className="leading-relaxed text-emerald-100/90 text-lg md:text-xl font-serif italic border-l-4 border-emerald-900/30 pl-8 whitespace-pre-wrap">
+              {displayText}
+              {isTyping && <span className="inline-block w-2.5 h-6 bg-emerald-500 ml-2 animate-pulse align-middle" />}
+            </p>
+          </div>
 
-          {!isTyping && !currentStage?.isEnding && (
-            <div className="grid gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              {currentStage?.options?.map((opt, idx) => {
-                const isLocked = opt.requirement && (traitStats[opt.requirement.trait] || 0) < opt.requirement.min;
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => !isLocked && handleOptionClick(opt)}
-                    className={`w-full text-left p-4 border transition-all rounded-lg flex items-center gap-4 group relative overflow-hidden ${isLocked ? 'opacity-40 border-slate-800 bg-slate-900/20 cursor-not-allowed' : 'border-emerald-800/30 bg-emerald-900/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 active:scale-[0.98]'}`}
-                  >
-                    {isLocked ? <Lock className="w-4 h-4 text-slate-600" /> : <div className="w-1.5 h-1.5 rounded-full bg-emerald-800 group-hover:bg-emerald-400" />}
-                    <span className={`flex-1 text-sm font-bold ${isLocked ? 'text-slate-600' : 'text-emerald-400/80 group-hover:text-emerald-300'}`}>
-                      {opt.text}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {!isTyping && currentStage?.isEnding && (
-            <div className="mt-16 border-t border-emerald-900/50 pt-10 text-center animate-in zoom-in-95 duration-700">
-              <button onClick={restartGame} className="px-10 py-4 bg-emerald-600 text-slate-950 rounded-full hover:bg-emerald-400 transition-all font-black uppercase tracking-widest">REBOOT_SYSTEM</button>
-            </div>
-          )}
+          <div className={`mt-12 transition-all duration-700 ${isTyping ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0'}`}>
+            {!currentStage?.isEnding ? (
+              <div className="grid gap-4">
+                {currentStage?.options?.map((opt, idx) => {
+                  const isLocked = opt.requirement && (traitStats[opt.requirement.trait] || 0) < opt.requirement.min;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => !isLocked && handleOptionClick(opt)}
+                      className={`w-full text-left p-5 border transition-all rounded-2xl flex items-center gap-5 group relative overflow-hidden ${isLocked ? 'opacity-30 border-slate-800 bg-slate-900/20 cursor-not-allowed' : 'border-emerald-800/20 bg-emerald-900/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 active:scale-[0.98]'}`}
+                    >
+                      {isLocked ? <Lock className="w-5 h-5 text-slate-600" /> : <div className="w-2 h-2 rounded-full bg-emerald-900 group-hover:bg-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />}
+                      <span className={`flex-1 text-base font-bold tracking-tight ${isLocked ? 'text-slate-600' : 'text-emerald-400/80 group-hover:text-emerald-300'}`}>
+                        {opt.text}
+                      </span>
+                      {!isLocked && <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center pt-8 border-t border-emerald-900/30">
+                <button onClick={restartGame} className="px-12 py-5 bg-emerald-600 text-slate-950 rounded-full hover:bg-emerald-400 transition-all font-black uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95">REBOOT_SYSTEM</button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Footer Status */}
+      {/* Footer Info */}
       <div className="w-full max-w-2xl mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 z-10">
-        <StatusCard label="Active_Traits" value={Object.keys(traitStats).length > 0 ? Object.keys(traitStats).map(k => `${k}:${traitStats[k]}`).join(', ') : 'NONE'} color="text-blue-400" />
-        <div className={`p-4 rounded-xl border transition-all sm:col-span-2 ${isCritical ? 'bg-red-950/20 border-red-500/50' : 'bg-emerald-950/20 border-emerald-900/30'}`}>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-[9px] uppercase font-bold opacity-40">System_Integrity</span>
-            <span className={`text-[10px] font-bold ${isCritical ? 'text-red-500 animate-pulse' : 'text-emerald-500'}`}>{stability}%</span>
+        <StatusCard label="Active_Traits" value={Object.keys(traitStats).length > 0 ? Object.keys(traitStats).map(k => `${k}:${traitStats[k]}`).join(', ') : 'Initializing...'} color="text-blue-400" />
+        <div className={`p-4 rounded-2xl border transition-all sm:col-span-2 flex flex-col justify-center ${isCritical ? 'bg-red-950/20 border-red-500/50' : 'bg-emerald-950/10 border-emerald-900/20'}`}>
+          <div className="flex justify-between items-center mb-2 px-1">
+            <span className="text-[9px] uppercase font-bold opacity-40 tracking-widest text-emerald-500">Stability_Monitor</span>
+            <span className={`text-[10px] font-black ${isCritical ? 'text-red-500 animate-pulse' : 'text-emerald-500'}`}>{stability}%</span>
           </div>
-          <div className="h-1 bg-black/50 rounded-full overflow-hidden">
-            <div className={`h-full transition-all duration-1000 ${isCritical ? 'bg-red-500 shadow-[0_0_10px_red]' : 'bg-emerald-500 shadow-[0_0_10px_#10b981]'}`} style={{ width: `${stability}%` }} />
+          <div className="h-1.5 bg-black/40 rounded-full overflow-hidden">
+            <div className={`h-full transition-all duration-1000 ${isCritical ? 'bg-red-500 shadow-[0_0_15px_red]' : 'bg-emerald-500 shadow-[0_0_15px_#10b981]'}`} style={{ width: `${stability}%` }} />
           </div>
         </div>
       </div>
 
-      {/* Admin Overlay (No changes needed) */}
+      {/* --- Overlay: System Logs --- */}
+      {isLogOpen && (
+        <div className="fixed inset-0 z-[60] bg-slate-950/95 backdrop-blur-md p-4 md:p-8 flex flex-col items-center animate-in slide-in-from-bottom-8 duration-500">
+          <div className="w-full max-w-2xl h-full flex flex-col bg-black border border-emerald-500/20 rounded-3xl shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-emerald-900/50 flex justify-between items-center bg-emerald-950/20">
+              <div className="flex items-center gap-3">
+                <HistoryIcon className="w-5 h-5 text-emerald-500" />
+                <h3 className="font-black text-lg tracking-widest text-emerald-400 uppercase">System_History_Logs</h3>
+              </div>
+              <button onClick={() => setIsLogOpen(false)} className="p-2 hover:bg-emerald-500/10 rounded-xl transition-all text-emerald-700 flex items-center gap-2 border border-emerald-900/50">
+                <ArrowLeft className="w-4 h-4" /> <span className="text-xs font-bold uppercase">Back</span>
+              </button>
+            </div>
+            <div ref={logScrollRef} className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar bg-black/40">
+              {history.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center opacity-20 space-y-4">
+                  <Database className="w-12 h-12" />
+                  <p className="text-sm font-bold uppercase tracking-[0.3em]">No logs recorded yet</p>
+                </div>
+              ) : (
+                history.map((h, i) => (
+                  <div key={i} className="animate-in fade-in slide-in-from-left-4 duration-500">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-[10px] font-bold text-emerald-900 bg-emerald-500/10 px-2 py-0.5 rounded tracking-tighter">{h.timestamp}</span>
+                      <div className="h-px flex-1 bg-emerald-900/20" />
+                    </div>
+                    <div className="pl-4 border-l-2 border-emerald-900/30">
+                      <div className="text-xs font-black text-emerald-700 uppercase mb-1 tracking-widest">{h.stageTitle}</div>
+                      <div className="text-blue-400 font-bold italic text-sm">> {h.actionText}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="p-4 bg-emerald-950/10 border-t border-emerald-900/30 text-center">
+              <p className="text-[9px] uppercase font-bold opacity-30 tracking-[0.2em]">End of encrypted records</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- Admin Overlay (No logic changes) --- */}
       {isAdminOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/98 backdrop-blur-xl p-4 md:p-8 flex flex-col items-center">
+        <div className="fixed inset-0 z-[70] bg-slate-950/98 backdrop-blur-xl p-4 md:p-8 flex flex-col items-center animate-in fade-in duration-300">
           <div className="w-full max-w-5xl h-full flex flex-col bg-black border border-emerald-500/20 rounded-2xl shadow-2xl overflow-hidden text-emerald-100 font-sans">
             <div className="p-5 border-b border-emerald-900/50 flex justify-between items-center bg-emerald-950/30">
               <h3 className="font-black text-emerald-400 flex items-center gap-3 uppercase tracking-tighter"><Settings className="w-5 h-5" /> Story_Kernel_Override</h3>
@@ -356,7 +381,6 @@ const App = () => {
                 <button onClick={() => setIsAdminOpen(false)} className="p-1.5 hover:bg-red-500/20 text-red-500 rounded-lg"><X /></button>
               </div>
             </div>
-
             <div className="flex-1 flex overflow-hidden">
               <div className="w-64 border-r border-emerald-900/50 overflow-y-auto p-4 bg-black/40 custom-scrollbar">
                 <button onClick={addStage} className="w-full mb-4 py-2 bg-emerald-500/5 border border-dashed border-emerald-700 text-[10px] font-bold uppercase rounded-lg hover:bg-emerald-500/10">+ NEW_STAGE</button>
@@ -366,25 +390,14 @@ const App = () => {
                   </div>
                 ))}
               </div>
-
               <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-slate-950/20">
                 {editingStage ? (
                   <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-[10px] uppercase opacity-40 font-bold">Stage ID</label>
-                        <input value={editingStage.id} onChange={(e) => setEditingStage({...editingStage, id: e.target.value})} className="w-full bg-black border border-emerald-900 rounded-lg p-2 text-sm outline-none focus:border-emerald-500" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] uppercase opacity-40 font-bold">Title</label>
-                        <input value={editingStage.title} onChange={(e) => setEditingStage({...editingStage, title: e.target.value})} className="w-full bg-black border border-emerald-900 rounded-lg p-2 text-sm outline-none focus:border-emerald-500 text-emerald-400 font-bold" />
-                      </div>
+                      <div className="space-y-1"><label className="text-[10px] uppercase opacity-40 font-bold">Stage ID</label><input value={editingStage.id} onChange={(e) => setEditingStage({...editingStage, id: e.target.value})} className="w-full bg-black border border-emerald-900 rounded-lg p-2 text-sm outline-none focus:border-emerald-500" /></div>
+                      <div className="space-y-1"><label className="text-[10px] uppercase opacity-40 font-bold">Title</label><input value={editingStage.title} onChange={(e) => setEditingStage({...editingStage, title: e.target.value})} className="w-full bg-black border border-emerald-900 rounded-lg p-2 text-sm outline-none focus:border-emerald-500 text-emerald-400 font-bold" /></div>
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase opacity-40 font-bold">Description</label>
-                      <textarea rows={4} value={editingStage.description} onChange={(e) => setEditingStage({...editingStage, description: e.target.value})} className="w-full bg-black border border-emerald-900 rounded-lg p-3 text-sm outline-none focus:border-emerald-500 min-h-[100px]" />
-                    </div>
-
+                    <div className="space-y-1"><label className="text-[10px] uppercase opacity-40 font-bold">Description</label><textarea rows={4} value={editingStage.description} onChange={(e) => setEditingStage({...editingStage, description: e.target.value})} className="w-full bg-black border border-emerald-900 rounded-lg p-3 text-sm outline-none focus:border-emerald-500 min-h-[100px]" /></div>
                     <div className="space-y-4 pt-4 border-t border-emerald-900/50">
                       <div className="flex justify-between items-center"><h4 className="text-[10px] font-black uppercase opacity-40 tracking-widest">Branching & Logic</h4><button onClick={() => setEditingStage({...editingStage, options: [...(editingStage.options || []), { text: 'New Option', next: 'boot', trait: 'none' }]})} className="text-[10px] text-emerald-600 hover:text-emerald-400">+ ADD_OPTION</button></div>
                       {editingStage.options?.map((opt, idx) => (
