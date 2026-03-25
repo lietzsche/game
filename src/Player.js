@@ -232,16 +232,27 @@ export class Player {
         let pX = (curState === 'run' ? -12 : 0);
         let pY = hY + torsoLen;
 
-        // Dynamic Leaning during Attack
+        // Dynamic Leaning and Rotation during Attack
         let leanAngle = 0;
         if (this.isAttacking && !isGhost) {
             const prg = this.attackFrame / (this.attackType === 'heavy' ? 26 : 16);
-            leanAngle = Math.sin(prg * Math.PI) * (this.attackType === 'heavy' ? 0.6 : 0.3);
-            g.rotateCanvas(leanAngle); // Lean body into the attack
+            const easePrg = Math.sin(prg * Math.PI);
             
-            if (this.combo === 0) pX = 15;
-            else if (this.combo === 1) pX = -10;
-            else pX = 25;
+            if (this.combo === 0) { // Diagonal Down
+                leanAngle = easePrg * 0.4;
+                pX = 15 + easePrg * 10;
+            } else if (this.combo === 1) { // Diagonal Up
+                leanAngle = -easePrg * 0.3;
+                pX = -10 - easePrg * 5;
+            } else if (this.combo === 2) { // Spinning Finisher
+                leanAngle = easePrg * 0.2;
+                pX = 30;
+                g.scaleCanvas(1 - easePrg * 0.2, 1); // Slight squash for speed
+            } else { // Heavy slam
+                leanAngle = easePrg * 0.6;
+                pX = 20;
+            }
+            g.rotateCanvas(leanAngle);
         }
 
         g.beginPath(); g.moveTo(0, hY + 8); g.lineTo(pX, pY); g.strokePath();
@@ -268,35 +279,30 @@ export class Player {
         if (!isGhost && this.isAttacking) {
             const maxF = this.attackType === 'heavy' ? 26 : (this.combo === 2 ? 22 : 16);
             const prg = this.attackFrame / maxF;
+            const easePrg = Math.pow(prg, 0.4); 
             
-            // Non-linear easing for "snappy" swing
-            const easePrg = Math.pow(prg, 0.5); 
-            
-            let sA, eA;
-            if (this.attackType === 'heavy') { sA = -2.0; eA = 1.5; }
-            else if (this.combo === 0) { sA = -2.5; eA = 1.0; }
-            else if (this.combo === 1) { sA = 1.2; eA = -1.2; } // Vertical down
-            else { sA = -0.5; eA = 1.8; }
+            let sA, eA, hOffset = 12;
+            if (this.attackType === 'heavy') { sA = -2.2; eA = 1.6; }
+            else if (this.combo === 0) { sA = -2.8; eA = 0.5; } // Diagonal Down
+            else if (this.combo === 1) { sA = 1.5; eA = -1.5; } // Diagonal Up
+            else { sA = -1.0; eA = 2.2; } // Wide Spin
 
             const swing = sA + (eA - sA) * easePrg;
-            const elbowA = (this.combo === 1) ? 1.2 : 0.4;
-            hand = this.drawLimb(g, 0, hY + 12, swing, elbowA, 35, 35);
+            hand = this.drawLimb(g, 0, hY + hOffset, swing, 0.4, 35, 35);
 
-            // Blade with motion trail weight
             g.lineStyle(8, 0x000000, overrideAlpha);
             g.beginPath(); g.moveTo(hand.x, hand.y);
-            let bladeLen = (this.combo === 2 || this.attackType === 'heavy') ? 140 : 110;
+            let bladeLen = (this.combo === 2 || this.attackType === 'heavy') ? 145 : 115;
             g.lineTo(hand.x + Math.cos(swing) * bladeLen, hand.y + Math.sin(swing) * bladeLen);
             g.strokePath();
             
-            // Add "Speed Lines" around hand
-            if (prg > 0.2 && prg < 0.8) {
-                g.lineStyle(2, 0x000000, 0.3);
-                for(let i=0; i<3; i++) {
-                    let ang = swing - 0.2 + (i*0.1);
+            if (prg > 0.1 && prg < 0.8) {
+                g.lineStyle(2, 0x000000, 0.2);
+                for(let i=0; i<2; i++) {
+                    let ang = swing - 0.15 + (i*0.1);
                     g.beginPath(); 
-                    g.moveTo(hand.x + Math.cos(ang)*40, hand.y + Math.sin(ang)*40);
-                    g.lineTo(hand.x + Math.cos(ang)*100, hand.y + Math.sin(ang)*100);
+                    g.moveTo(hand.x + Math.cos(ang)*50, hand.y + Math.sin(ang)*50);
+                    g.lineTo(hand.x + Math.cos(ang)*110, hand.y + Math.sin(ang)*110);
                     g.strokePath();
                 }
             }
@@ -324,43 +330,49 @@ export class Player {
             for (let i = 1; i < this.scarfNodes.length; i++) g.lineTo(this.scarfNodes[i].x, this.scarfNodes[i].y);
             g.strokePath();
 
-            // --- ADVANCED SLASH TRAIL (Brush Stroke) ---
+            // --- STYLISH SLASH TRAIL (Diagonal & 3D Perspective) ---
             if (this.isAttacking) {
                 const maxF = this.attackType === 'heavy' ? 26 : (this.combo === 2 ? 22 : 16);
                 const prg = this.attackFrame / maxF;
-                const alpha = Math.pow(1 - prg, 1.5);
+                const alpha = Math.pow(1 - prg, 1.8);
                 const isFinisher = (this.attackType === 'light' && this.combo === 2) || this.attackType === 'heavy';
 
                 g.save();
-                g.translateCanvas(this.x, this.y + (this.combo === 1 ? 40 : 55));
+                g.translateCanvas(this.x, this.y + 55);
                 g.scaleCanvas(this.dir, 1);
 
-                let sA, eA, radius = isFinisher ? 210 : 160;
-                if (this.attackType === 'heavy') { sA = -2.0; eA = 1.5; }
-                else if (this.combo === 0) { sA = -2.5; eA = 1.0; }
-                else if (this.combo === 1) { sA = -1.5; eA = 1.5; radius = 180; g.rotateCanvas(Math.PI/2); } // Vertical
-                else { sA = -0.8; eA = 2.0; radius = 220; }
+                // Rotate the entire slash plane based on combo
+                if (this.combo === 0) g.rotateCanvas(0.4); // Diagonal Down
+                else if (this.combo === 1) g.rotateCanvas(-0.5); // Diagonal Up
+                else if (this.combo === 2) g.rotateCanvas(0.1); // Wide Horizontal
+                else g.rotateCanvas(1.3); // Heavy Slam (Near Vertical)
 
-                // Multi-layered brush stroke for "Ink" look
+                // Squash the arc to create 3D perspective
+                g.scaleCanvas(1.0, this.combo === 2 ? 0.3 : 0.6); 
+
+                let sA, eA, radius = isFinisher ? 240 : 180;
+                if (this.attackType === 'heavy') { sA = -2.2; eA = 1.6; }
+                else if (this.combo === 0) { sA = -2.8; eA = 0.5; }
+                else if (this.combo === 1) { sA = -1.8; eA = 1.8; }
+                else { sA = -1.2; eA = 2.4; radius = 280; }
+
                 for(let i=0; i<3; i++) {
-                    const offset = i * 4;
+                    const offset = i * 6;
                     const trailAlpha = alpha * (1 - i * 0.3);
-                    g.lineStyle(isFinisher ? 70 - offset : 40 - offset, isFinisher ? 0xb40000 : 0x000000, trailAlpha);
+                    g.lineStyle(isFinisher ? 80 - offset : 50 - offset, isFinisher ? 0xb40000 : 0x000000, trailAlpha);
                     g.beginPath();
-                    // Draw a shorter arc as the "head" of the slash
-                    const headPrg = Math.min(1, prg * 1.4);
+                    const headPrg = Math.min(1, prg * 1.5);
                     const curEA = sA + (eA - sA) * headPrg;
-                    g.arc(0, 0, radius - (i*2), sA, curEA, false);
+                    g.arc(0, 0, radius - (i*3), sA, curEA, false);
                     g.strokePath();
                 }
 
-                // Ink Splatter at the tip of the slash
-                if (Math.random() < 0.4) {
+                if (Math.random() < 0.5) {
                     const tipA = sA + (eA - sA) * prg;
                     this.effects.createParticles(
                         this.x + Math.cos(tipA) * radius * this.dir, 
-                        this.y + 55 + Math.sin(tipA) * radius, 
-                        isFinisher ? 0xb40000 : 0x000000, 3, 2
+                        this.y + 55 + Math.sin(tipA) * radius * 0.6, 
+                        isFinisher ? 0xb40000 : 0x000000, 4, 2.5
                     );
                 }
                 g.restore();
