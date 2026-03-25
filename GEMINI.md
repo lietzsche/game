@@ -55,7 +55,7 @@
 
 ## 주요 파일 구조
 
-*   `sample.js`: 게임의 메인 컴포넌트 및 모든 시나리오 데이터.
+*   `src/App.jsx`: 게임의 메인 컴포넌트 및 모든 시나리오 데이터.
 *   `src/main.jsx`: React 앱의 진입점(Entry Point).
 *   `index.html`: 메인 HTML 템플릿 및 폰트 설정.
 *   `tailwind.config.js`: Tailwind CSS 설정 (콘텐츠 경로 및 테마 확장).
