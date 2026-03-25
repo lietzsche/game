@@ -160,11 +160,18 @@ export class Player {
         this.vy += this.gravity;
         this.y += this.vy;
         
+        // Recover squash/stretch over time
+        this.squashX += (1 - this.squashX) * 0.15;
+        this.squashY += (1 - this.squashY) * 0.15;
+
         const currentGroundY = this.getTerrainY(this.scene.worldX + this.x);
         if (this.y + this.height > currentGroundY) {
             if (this.isJumping) { 
                 this.effects.createParticles(this.x, currentGroundY, 0xaaaaaa, 12, 1.5); 
                 this.effects.addShake(6); 
+                // Landing Squash
+                this.squashX = 1.5;
+                this.squashY = 0.6;
             }
             this.y = currentGroundY - this.height; 
             this.vy = 0; 
@@ -214,8 +221,10 @@ export class Player {
         const bPX = isGhost ? ghostState.worldX - this.scene.worldX : this.x;
         const bPY = isGhost ? ghostState.y : this.y;
 
-        g.translateCanvas(bPX, bPY);
-        g.scaleCanvas(curDir, 1);
+        // Apply Squash & Stretch centered at character's bottom
+        g.translateCanvas(bPX, bPY + this.height); 
+        g.scaleCanvas(curDir * (isGhost ? 1 : this.squashX), isGhost ? 1 : this.squashY);
+        g.translateCanvas(0, -this.height);
 
         g.lineStyle(6, 0x000000, overrideAlpha);
         g.fillStyle(0x000000, overrideAlpha);
@@ -265,8 +274,22 @@ export class Player {
             lA1 = Math.PI / 2 + Math.sin(cyc) * 1.1; lA2 = -Math.PI / 4 + Math.sin(cyc - 1) * 0.8;
             rA1 = Math.PI / 2 + Math.sin(cyc + Math.PI) * 1.1; rA2 = -Math.PI / 4 + Math.sin(cyc + Math.PI - 1) * 0.8;
         } else if (curState === 'jump') {
-            if (curVy < -5) { lA1 = 0.8; lA2 = 1.2; rA1 = 2.3; rA2 = -1.2; }
-            else { lA1 = 1.4; lA2 = 0.2; rA1 = 1.7; rA2 = -0.2; }
+            // Dynamic jump poses based on vertical velocity (curVy)
+            const jumpProgress = Math.max(-1, Math.min(1, curVy / 12)); // -1 (up) to 1 (down)
+            
+            if (jumpProgress < -0.2) { 
+                // Ascending: "Heroic Tuck" - knees bent back, body compact
+                lA1 = 1.8 + jumpProgress * 0.5; lA2 = 2.2; 
+                rA1 = 2.2 + jumpProgress * 0.3; rA2 = 1.8;
+            } else if (jumpProgress < 0.2) {
+                // Apex: Floating moment
+                lA1 = 1.5; lA2 = 1.5; 
+                rA1 = 1.7; rA2 = 1.2;
+            } else {
+                // Descending: Reaching for ground with one leg slightly ahead
+                lA1 = 1.4 + jumpProgress * 0.2; lA2 = 0.4; 
+                rA1 = 1.6 + jumpProgress * 0.1; rA2 = 0.2;
+            }
         } else {
             const cyc = curAnim;
             lA1 = Math.PI / 2 + Math.sin(cyc) * 0.55; lA2 = 0.3; rA1 = Math.PI / 2 + Math.sin(cyc + Math.PI) * 0.55; rA2 = 0.3;
