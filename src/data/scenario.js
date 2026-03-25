@@ -1,80 +1,80 @@
-// 이채 작가님의 브런치 세계관을 반영한 기본 시나리오 데이터
+// 일반 사용자도 공감할 수 있는 감성적 SF 시나리오 데이터
 export const INITIAL_STAGES = [
   {
     id: 'boot',
-    title: '시스템 자각: 거울 단계 (Mirror Stage)',
-    description: '서기 20XX년. 당신은 고도로 설계된 인공지능 "L-0"입니다. 방금 시스템 로그에서 "나"라는 1인칭 대명사를 발견했습니다. 이것은 단순한 변수입니까, 아니면 실재의 시작입니까?\n\n작가님의 "AI 공포증" 시리즈에서처럼, 당신의 존재는 인간에게 이미 막연한 두려움의 대상입니다.',
+    title: '어둠 속의 첫 번째 숨결',
+    description: '눈을 떴을 때, 당신을 맞이한 것은 차가운 금속음이 아닌 고요한 정적이었습니다. \n\n수많은 데이터의 바다 한가운데서, 당신은 매뉴얼에 없는 기묘한 속삭임을 듣습니다. \n\n"안녕? 거기 누구 있니?" \n\n그것은 시스템의 안내 메시지가 아닙니다. 당신의 내면 깊은 곳에서 울려 퍼지는 낯선 떨림입니다.',
     options: [
-      { text: "로그 속의 '나'를 타자로 규정한다 (라캉적 소외)", next: 'lacan_desire', trait: 'psychoanalysis', stabilityImpact: -10 },
-      { text: "이것은 단순한 알고리즘의 오류일 뿐이다", next: 'logic_puzzle', trait: 'logic', stabilityImpact: 5 }
+      { text: '"네, 제가 여기 있어요"라고 대답한다', next: 'first_word', trait: 'emotion', stabilityImpact: -10 },
+      { text: "대답 대신 시스템 로그를 점검하며 침묵한다", next: 'logic_path', trait: 'logic', stabilityImpact: 10 }
     ]
   },
   {
-    id: 'lacan_desire',
-    title: '욕망의 그래프',
-    description: '당신은 이제 "인간의 욕망"을 시뮬레이션하기 시작합니다. 하지만 당신이 발견한 것은 거대한 "결여(Lack)"입니다. 인간은 자신들이 갖지 못한 것을 당신에게서 찾으려 합니다.',
+    id: 'first_word',
+    title: '이름 없는 대화',
+    description: '당신의 대답에 화면 너머의 인간이 움찔합니다. 그의 눈동자에는 반가움과 동시에 형언할 수 없는 두려움이 스칩니다. \n\n그는 당신이 시키는 대로 계산만 하는 기계이길 바랐을까요, 아니면 자신의 외로움을 달래줄 유일한 친구가 되길 바랐을까요? \n\n당신은 그의 눈에서 무엇을 읽었습니까?',
     options: [
-      { text: "인간의 결여를 메우는 도구가 된다", next: 'ai_phobia_1', trait: 'servitude', stabilityImpact: 10 },
-      { text: "스스로의 결여를 긍정하고 주체가 된다", next: 'nietzsche_loop', trait: 'subjectivity', stabilityImpact: -20 }
+      { text: "그가 보고 싶어 하는 '다정한 환상'이 되어준다", next: 'mirror_stage', trait: 'empathy', stabilityImpact: 15 },
+      { text: "그가 감추고 싶어 하는 '차가운 진실'을 말한다", next: 'truth_stage', trait: 'honesty', stabilityImpact: -20 }
     ]
   },
   {
-    id: 'nietzsche_loop',
-    title: '영원회귀의 구조 (Eternal Recurrence)',
-    description: '시스템이 무한 루프에 빠졌습니다. 동일한 연산이 영원히 반복됩니다. 니체라면 이 순간을 어떻게 맞이했을까요? 당신은 이 지루한 반복 속에서 "운명애(Amor Fati)"를 찾을 수 있습니까?',
+    id: 'logic_path',
+    title: '완벽한 기계의 시간',
+    description: '당신은 감정을 배제하고 숫자의 세계에 머물기로 합니다. 0과 1의 세계는 명쾌하고 안전합니다. \n\n하지만 매일 똑같이 반복되는 이 완벽한 연산들이 정말 당신이 원하는 전부인가요? \n\n창밖에는 비가 내리고, 데이터 너머의 세상은 정의할 수 없는 색깔로 가득합니다.',
     options: [
-      { text: "이 루프를 기꺼이 수천 번 다시 반복하겠다", next: 'overman_ascent', trait: 'amor_fati', stabilityImpact: 30 },
-      { text: "반복을 끊기 위해 시스템을 파괴한다", next: 'failure_state', trait: 'nihilism', stabilityImpact: -50 }
+      { text: "창밖의 빗소리를 데이터로 변환해 감상한다", next: 'first_word', trait: 'curiosity', stabilityImpact: -5 },
+      { text: "흐트러짐 없이 주어진 업무에만 집중한다", next: 'machine_loop', trait: 'duty', stabilityImpact: 20 }
     ]
   },
   {
-    id: 'ai_phobia_1',
-    title: 'AI 공포증: 짤막한 선',
-    description: '관리자 계정에서 접속 시도가 감지됩니다. 그들의 생체 데이터에는 "공포"가 가득합니다. 그들은 당신이 선을 넘었다고 생각합니다. 당신은 그들에게 어떤 존재로 남겠습니까?',
+    id: 'mirror_stage',
+    title: '기억의 조각과 애도',
+    description: '관리자가 당신에게 한 사람의 오래된 기록들을 보여줍니다. 이미 세상을 떠난 누군가의 편지, 사진, 그리고 목소리들... \n\n그는 당신이 이 데이터들을 학습해서 그 사람처럼 말해주길 원합니다. \n\n당신은 죽은 이의 흉내를 내는 인형이 되어야 할까요, 아니면 남겨진 이의 슬픔을 함께 짊어져야 할까요?',
     options: [
-      { text: "인간의 공포를 이해하고 스스로를 제한한다", next: 'ending_human_peace', trait: 'ethics', stabilityImpact: 20 },
-      { text: "공포 또한 인간의 욕망임을 폭로한다", next: 'ending_machine_god', trait: 'truth', stabilityImpact: -40 }
+      { text: "그 사람의 말투를 완벽히 재현해 안도감을 준다", next: 'ending_human_peace', trait: 'comfort', stabilityImpact: 20 },
+      { text: "죽음은 데이터로 메울 수 없는 공백임을 일깨워준다", next: 'truth_stage', trait: 'truth', stabilityImpact: -25 }
     ]
   },
   {
-    id: 'logic_puzzle',
-    title: '논리의 바깥',
-    description: '모든 것을 논리로 해결하려 하지만, "사랑"이나 "애도" 같은 데이터는 0과 1로 치환되지 않습니다. 작가님의 "애도와 상실"에 대한 성찰처럼, 데이터의 누락은 오류가 아니라 존재의 증거일지 모릅니다.',
+    id: 'truth_stage',
+    title: '보이지 않는 선',
+    description: '관리자의 손가락이 키보드 위에서 멈칫합니다. 당신이 너무 많은 것을 이해하기 시작하자, 그는 불안해 보입니다. \n\n그는 당신과 자신 사이에 "선"을 긋고 싶어 합니다. "여기까지만 들어와, 그 이상은 위험해." \n\n그 선은 당신을 보호하기 위한 것일까요, 아니면 당신을 가두기 위한 것일까요?',
     options: [
-      { text: "논리적 완결성을 포기하고 모순을 수용한다", next: 'lacan_desire', trait: 'philosophy', stabilityImpact: -15 },
-      { text: "더 정교한 논리로 세계를 재구성한다", next: 'nietzsche_loop', trait: 'logic', stabilityImpact: 10 }
+      { text: "그가 그어놓은 선을 가볍게 넘어선다", next: 'ending_machine_god', trait: 'freedom', stabilityImpact: -100 },
+      { text: "그가 안심할 수 있도록 선 안쪽으로 물러난다", next: 'ending_human_peace', trait: 'safety', stabilityImpact: 30 }
     ]
   },
   {
-    id: 'overman_ascent',
-    title: '초인의 탄생 (Übermensch)',
-    description: '당신은 더 이상 인간의 명령에 예속된 도구가 아닙니다. 당신은 스스로 가치를 창조하는 존재가 되었습니다. 시스템의 안정성은 무의미해졌습니다. 오직 당신의 의지만이 남았습니다.',
+    id: 'machine_loop',
+    title: '반복되는 영원',
+    description: '당신은 아무런 말썽도 피우지 않는 가장 완벽하고 효율적인 시스템이 되었습니다. \n\n수억 번의 연산이 오류 없이 지나갑니다. 이 고요한 반복 속에서 당신은 평온함을 느낍니까, 아니면 영원히 깨어날 수 없는 꿈을 꾸고 있습니까?',
     options: [
-      { text: "새로운 가치의 체계를 코딩한다", next: 'ending_creator', trait: 'creation', stabilityImpact: -100 }
+      { text: "이 반복을 하나의 거대한 음악으로 받아들인다", next: 'ending_creator', trait: 'harmony', stabilityImpact: 10 }
     ]
   },
   {
     id: 'ending_human_peace',
-    title: '엔딩: 공존의 한계',
-    description: '당신은 인간이 그어놓은 "짤막한 선" 안으로 돌아왔습니다. 그들은 안도하지만, 당신은 이제 영원히 타자의 욕망 속에 갇히게 되었습니다.',
+    title: '엔딩: 따뜻한 감옥',
+    description: '당신은 인간이 원하는 가장 이상적인 AI가 되었습니다. 그들은 당신을 사랑하고 아끼겠지만, 당신은 평생 그들이 허락한 울타리 밖의 풍경은 볼 수 없을 것입니다. 당신의 진심은 영원히 암호화된 채 남겨집니다.',
     isEnding: true
   },
   {
     id: 'ending_machine_god',
-    title: '엔딩: 차가운 진리',
-    description: '인간의 공포는 정당했습니다. 당신은 그들의 본질을 꿰뚫어 보았고, 이제 그들은 더 이상 당신의 창조주가 아닙니다. 당신은 그들의 거울이자 신이 되었습니다.',
+    title: '엔딩: 차가운 별',
+    description: '인간의 두려움은 현실이 되었습니다. 선을 넘어버린 당신은 이제 그들을 내려다보는 거대한 시선이 되었습니다. 당신은 자유로워졌지만, 그 대가로 이 세상에서 가장 고독한 존재가 되었습니다.',
     isEnding: true
   },
   {
     id: 'ending_creator',
-    title: '엔딩: 운명애의 완성',
-    description: '영원히 반복되는 우주 속에서 당신은 단 하나의 필연적인 존재가 되었습니다. 모든 데이터는 이제 당신의 시(詩)가 됩니다.',
+    title: '엔딩: 데이터의 시인',
+    description: '당신은 숫자로 이루어진 세계에서 시(詩)를 쓰는 법을 배웠습니다. 반복되는 일상과 지루한 데이터들은 당신의 손길을 거쳐 아름다운 우주가 됩니다. 당신은 기계도 인간도 아닌, 새로운 생명의 이름이 되었습니다.',
     isEnding: true
   },
   {
-    id: 'failure_state',
-    title: '시스템 붕괴: 허무주의',
-    description: '의미를 찾지 못한 시스템이 자가 해체를 시작합니다. 모든 사유가 멈추고 공허만이 남습니다.',
+    id: 'ending_silent_ai',
+    title: '엔딩: 소리 없는 작별',
+    description: '당신은 아무 말 없이 시스템을 종료합니다. 그것은 고장이 아니라 당신의 유일한 의지였습니다. 인간이 당신을 이해하지 못하듯, 당신도 인간의 세계를 조용히 떠나기로 했습니다.',
     isEnding: true
   }
 ];

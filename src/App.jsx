@@ -34,20 +34,29 @@ const App = () => {
 
   // --- Typewriter Effect ---
   useEffect(() => {
-    let index = 0;
+    const targetText = currentStage?.description || "";
+    if (!targetText) {
+      setDisplayText("");
+      setIsTyping(false);
+      return;
+    }
+
     setDisplayText("");
     setIsTyping(true);
     
-    const targetText = currentStage?.description || "";
+    // 첫 글자를 즉시 표시하여 렌더링 누락 방지
+    setDisplayText(targetText.substring(0, 1));
+    let index = 1;
+
     const timer = setInterval(() => {
       if (index < targetText.length) {
-        setDisplayText(prev => prev + targetText.charAt(index));
+        setDisplayText(targetText.substring(0, index + 1));
         index++;
       } else {
         clearInterval(timer);
         setIsTyping(false);
       }
-    }, 20);
+    }, 30); // 안정성을 위해 속도를 약간 조정
 
     return () => clearInterval(timer);
   }, [currentStageId, currentStage]);
@@ -183,10 +192,12 @@ const App = () => {
             {currentStage?.title}
           </h2>
           
-          <div className="min-h-[180px] md:min-h-[220px]">
-            <p className="leading-relaxed text-emerald-100/90 text-lg md:text-xl font-serif italic border-l-4 border-emerald-900/30 pl-8 whitespace-pre-wrap">
-              {displayText}
-              {isTyping && <span className="inline-block w-2.5 h-6 bg-emerald-500 ml-2 animate-pulse align-middle" />}
+          <div className="min-h-[180px] md:min-h-[220px] overflow-visible">
+            <p className="leading-relaxed text-emerald-100/90 text-lg md:text-xl font-serif italic border-l-4 border-emerald-900/30 pl-14 pr-4 whitespace-pre-wrap relative overflow-visible">
+              <span className="inline-block pl-2">
+                {displayText}
+                {isTyping && <span className="inline-block w-2.5 h-6 bg-emerald-500 ml-2 animate-pulse align-middle" />}
+              </span>
             </p>
           </div>
 
