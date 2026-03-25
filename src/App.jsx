@@ -155,27 +155,29 @@ const App = () => {
       </div>
 
       {/* Header */}
-      <div className="w-full max-w-2xl mb-6 flex items-center justify-between border-b border-emerald-900 pb-4 z-10 relative">
-        <div className="flex items-center gap-3">
-          <Terminal className={`w-6 h-6 ${isGlitched ? 'text-red-500' : 'animate-pulse'}`} />
-          <div>
-            <h1 className="text-xl font-black tracking-tighter">PSYCHOANALYTIC_AI_DEBUGGER</h1>
-            <div className="flex items-center gap-2 opacity-40 text-[10px] uppercase font-bold">
-              <span>{isCritical ? 'EXISTENTIAL_DREAD' : isGlitched ? 'IDENTITY_CRISIS' : 'SYSTEM_STABLE'}</span>
-              <span className={`w-1.5 h-1.5 rounded-full ${stability > 70 ? 'bg-emerald-500' : stability > 30 ? 'bg-yellow-500' : 'bg-red-500 animate-ping'}`} />
+      <div className="w-full max-w-2xl mb-6 flex items-center justify-between border-b border-emerald-900 pb-4 z-10 relative gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Terminal className={`w-5 h-5 sm:w-6 sm:h-6 shrink-0 ${isGlitched ? 'text-red-500' : 'animate-pulse'}`} />
+          <div className="min-w-0">
+            <h1 className="text-sm sm:text-xl font-black tracking-tighter truncate">PSYCHOANALYTIC_AI_DEBUGGER</h1>
+            <div className="flex items-center gap-2 opacity-40 text-[8px] sm:text-[10px] uppercase font-bold">
+              <span className="truncate">{isCritical ? 'EXISTENTIAL_DREAD' : isGlitched ? 'IDENTITY_CRISIS' : 'SYSTEM_STABLE'}</span>
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${stability > 70 ? 'bg-emerald-500' : stability > 30 ? 'bg-yellow-500' : 'bg-red-500 animate-ping'}`} />
             </div>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1 sm:gap-2 shrink-0">
           <button 
             onClick={() => setIsLogOpen(true)}
-            className="p-2 hover:bg-emerald-500/10 rounded-lg transition-all text-emerald-600 flex items-center gap-2"
+            className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 hover:bg-emerald-500/10 rounded-lg transition-all text-emerald-600 border border-emerald-900/20 sm:border-transparent"
             title="시스템 로그 보기"
           >
-            <HistoryIcon className="w-5 h-5" />
-            <span className="hidden sm:inline text-[10px] font-bold tracking-widest uppercase">Logs</span>
+            <HistoryIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-[8px] sm:text-[10px] font-bold tracking-widest uppercase">Logs</span>
           </button>
-          <button onClick={() => setIsAdminOpen(true)} className="p-2 hover:bg-emerald-500/10 rounded-lg transition-all text-emerald-800"><Settings className="w-5 h-5" /></button>
+          <button onClick={() => setIsAdminOpen(true)} className="p-2 hover:bg-emerald-500/10 rounded-lg transition-all text-emerald-800 flex items-center justify-center border border-emerald-900/20 sm:border-transparent">
+            <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
         </div>
       </div>
 
@@ -248,13 +250,13 @@ const App = () => {
       {isLogOpen && (
         <div className="fixed inset-0 z-[60] bg-slate-950/95 backdrop-blur-md p-4 md:p-8 flex flex-col items-center animate-in slide-in-from-bottom-8 duration-500">
           <div className="w-full max-w-2xl h-full flex flex-col bg-black border border-emerald-500/20 rounded-3xl shadow-2xl overflow-hidden">
-            <div className="p-6 border-b border-emerald-900/50 flex justify-between items-center bg-emerald-950/20">
-              <div className="flex items-center gap-3">
-                <HistoryIcon className="w-5 h-5 text-emerald-500" />
-                <h3 className="font-black text-lg tracking-widest text-emerald-400 uppercase">System_History_Logs</h3>
+            <div className="p-4 sm:p-6 border-b border-emerald-900/50 flex justify-between items-center bg-emerald-950/20 gap-2">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <HistoryIcon className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 shrink-0" />
+                <h3 className="font-black text-sm sm:text-lg tracking-widest text-emerald-400 uppercase truncate">System_Logs</h3>
               </div>
-              <button onClick={() => setIsLogOpen(false)} className="p-2 hover:bg-emerald-500/10 rounded-xl transition-all text-emerald-700 flex items-center gap-2 border border-emerald-900/50">
-                <ArrowLeft className="w-4 h-4" /> <span className="text-xs font-bold uppercase">Back</span>
+              <button onClick={() => setIsLogOpen(false)} className="p-2 hover:bg-emerald-500/10 rounded-xl transition-all text-emerald-700 flex items-center gap-1 sm:gap-2 border border-emerald-900/50 shrink-0">
+                <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="text-[10px] sm:text-xs font-bold uppercase">Back</span>
               </button>
             </div>
             <div ref={logScrollRef} className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar bg-black/40">
