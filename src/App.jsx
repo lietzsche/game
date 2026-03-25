@@ -104,6 +104,7 @@ const App = () => {
   const [traits, setTraits] = useState([]);
   const [stability, setStability] = useState(100);
   const [isTyping, setIsTyping] = useState(false);
+  const [displayText, setDisplayText] = useState("");
   const scrollRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -123,11 +124,36 @@ const App = () => {
     stages.find(s => s.id === currentStageId) || stages[0],
   [stages, currentStageId]);
 
+  // --- Typewriter Effect & Auto Scroll ---
+  useEffect(() => {
+    let index = 0;
+    setDisplayText("");
+    setIsTyping(true);
+    
+    const targetText = currentStage?.description || "";
+    const timer = setInterval(() => {
+      if (index < targetText.length) {
+        setDisplayText(prev => prev + targetText.charAt(index));
+        index++;
+        // Real-time scrolling during typing
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      } else {
+        clearInterval(timer);
+        setIsTyping(false);
+      }
+    }, 20); // Typing speed
+
+    return () => clearInterval(timer);
+  }, [currentStageId, currentStage]);
+
+  // Ensure scroll stays at bottom on history change
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
     }
-  }, [history, currentStageId]);
+  }, [history]);
 
   useEffect(() => {
     localStorage.setItem('ontological_stages', JSON.stringify(stages));
@@ -142,15 +168,23 @@ const App = () => {
       if (currentCount < option.requirement.min) return;
     }
 
-    setHistory(prev => [...prev, { type: 'action', text: option.text }]);
+    // 1. Add current state to history before moving
+    setHistory(prev => [...prev, { 
+      type: 'stage', 
+      title: currentStage.title, 
+      text: currentStage.description 
+    }, { 
+      type: 'action', 
+      text: option.text 
+    }]);
+
     setTraits(prev => [...prev, option.trait]);
     setStability(prev => Math.max(0, Math.min(100, prev + (option.stabilityImpact || 0))));
     
-    setIsTyping(true);
+    // 2. Transition to next stage with a small delay for "pacing"
     setTimeout(() => {
       setCurrentStageId(option.next);
-      setIsTyping(false);
-    }, 400);
+    }, 300);
   };
 
   const restartGame = () => {
@@ -160,7 +194,7 @@ const App = () => {
     setStability(100);
   };
 
-  // --- Admin Logic ---
+  // --- Admin Logic (Same as before) ---
   const saveStage = (updatedStage) => {
     setStages(prev => prev.map(s => s.id === updatedStage.id ? updatedStage : s));
     setEditingStage(null);
@@ -208,12 +242,16 @@ const App = () => {
     reader.readAsText(file);
   };
 
-  // Visual Effects Logic
   const isGlitched = stability < 40;
   const isCritical = stability < 15;
 
   return (
     <div className={`min-h-screen bg-slate-950 text-emerald-500 font-mono p-4 md:p-8 flex flex-col items-center overflow-x-hidden selection:bg-emerald-500/30 ${isCritical ? 'animate-glitch-heavy' : isGlitched ? 'animate-glitch-light' : ''}`}>
+      {/* Background Pulse */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0">
+        <div className={`absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] ${isCritical ? 'from-red-500' : 'from-emerald-500'} via-transparent to-transparent animate-pulse`} />
+      </div>
+
       {/* Header */}
       <div className="w-full max-w-2xl mb-6 flex items-center justify-between border-b border-emerald-900 pb-4 z-10 relative">
         <div className="flex items-center gap-3">
@@ -229,38 +267,48 @@ const App = () => {
         <button onClick={() => setIsAdminOpen(true)} className="p-2 hover:bg-emerald-500/10 rounded-lg transition-all text-emerald-800"><Settings className="w-5 h-5" /></button>
       </div>
 
-      {/* Main Screen */}
+      {/* Main Terminal Container */}
       <div 
         ref={scrollRef}
         className={`w-full max-w-2xl flex-1 bg-black/60 backdrop-blur-md border rounded-xl p-6 md:p-8 overflow-y-auto custom-scrollbar relative z-10 transition-all duration-500 ${isCritical ? 'border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.1)]' : 'border-emerald-900/50 shadow-[0_0_30px_rgba(16,185,129,0.03)]'}`}
         style={{ minHeight: '480px' }}
       >
+        {/* Render History as archived logs */}
         {history.map((h, i) => (
-          <div key={i} className={`mb-4 ${h.type === 'action' ? 'text-blue-400 italic' : 'text-emerald-300'}`}>
-            <span className="opacity-20 mr-2 text-[10px] tracking-widest">{"> LOG_"}</span>
-            {h.text}
+          <div key={i} className={`mb-6 border-l border-emerald-900/20 pl-4 ${h.type === 'action' ? 'text-blue-400 italic' : 'text-emerald-800 opacity-50'}`}>
+            {h.type === 'stage' && <div className="text-[10px] uppercase font-black mb-1 tracking-widest">{h.title}</div>}
+            <div className="text-sm">
+              <span className="opacity-20 mr-2 text-[10px] tracking-widest">{h.type === 'action' ? "> RESPONSE_" : "> ARCHIVE_"}</span>
+              {h.text}
+            </div>
           </div>
         ))}
 
-        <div className={`animate-in fade-in slide-in-from-bottom-4 duration-700 ${isGlitched ? 'glitch-text' : ''}`}>
+        {/* Current Active Content */}
+        <div className={`mt-8 pb-20 ${isGlitched ? 'glitch-text' : ''}`}>
+          <div className="flex items-center gap-3 mb-4 opacity-50">
+            <div className="bg-emerald-500/20 px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase text-emerald-400">ACTIVE_PROCESS</div>
+            <div className="h-px flex-1 bg-emerald-900/30" />
+          </div>
+
           <h2 className={`text-lg md:text-xl mb-4 flex items-center gap-3 font-black uppercase tracking-widest ${currentStage?.isEnding ? 'text-yellow-500' : 'text-emerald-400'}`}>
             {currentStage?.isEnding ? <Zap className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
             {currentStage?.title}
           </h2>
           
-          <p className="leading-relaxed mb-10 text-emerald-100/90 text-lg border-l-2 border-emerald-900/30 pl-6 whitespace-pre-wrap">
-            {currentStage?.description}
+          <p className="leading-relaxed mb-10 text-emerald-100/90 text-lg border-l-2 border-emerald-500/50 pl-6 whitespace-pre-wrap min-h-[1.5em]">
+            {displayText}
+            {isTyping && <span className="inline-block w-2 h-5 bg-emerald-500 ml-1 animate-pulse" />}
           </p>
 
-          {!currentStage?.isEnding ? (
-            <div className="grid gap-3">
+          {!isTyping && !currentStage?.isEnding && (
+            <div className="grid gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
               {currentStage?.options?.map((opt, idx) => {
                 const isLocked = opt.requirement && (traitStats[opt.requirement.trait] || 0) < opt.requirement.min;
                 return (
                   <button
                     key={idx}
                     onClick={() => !isLocked && handleOptionClick(opt)}
-                    disabled={isTyping || isLocked}
                     className={`w-full text-left p-4 border transition-all rounded-lg flex items-center gap-4 group relative overflow-hidden ${isLocked ? 'opacity-40 border-slate-800 bg-slate-900/20 cursor-not-allowed' : 'border-emerald-800/30 bg-emerald-900/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 active:scale-[0.98]'}`}
                   >
                     {isLocked ? <Lock className="w-4 h-4 text-slate-600" /> : <div className="w-1.5 h-1.5 rounded-full bg-emerald-800 group-hover:bg-emerald-400" />}
@@ -271,8 +319,10 @@ const App = () => {
                 );
               })}
             </div>
-          ) : (
-            <div className="mt-16 border-t border-emerald-900/50 pt-10 text-center">
+          )}
+
+          {!isTyping && currentStage?.isEnding && (
+            <div className="mt-16 border-t border-emerald-900/50 pt-10 text-center animate-in zoom-in-95 duration-700">
               <button onClick={restartGame} className="px-10 py-4 bg-emerald-600 text-slate-950 rounded-full hover:bg-emerald-400 transition-all font-black uppercase tracking-widest">REBOOT_SYSTEM</button>
             </div>
           )}
@@ -293,7 +343,7 @@ const App = () => {
         </div>
       </div>
 
-      {/* --- Admin Overlay --- */}
+      {/* Admin Overlay (No changes needed) */}
       {isAdminOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/98 backdrop-blur-xl p-4 md:p-8 flex flex-col items-center">
           <div className="w-full max-w-5xl h-full flex flex-col bg-black border border-emerald-500/20 rounded-2xl shadow-2xl overflow-hidden text-emerald-100 font-sans">
@@ -341,11 +391,11 @@ const App = () => {
                         <div key={idx} className="p-4 bg-emerald-950/5 border border-emerald-900/50 rounded-xl space-y-3 relative group">
                           <Trash2 onClick={() => { const newOpts = [...editingStage.options]; newOpts.splice(idx, 1); setEditingStage({...editingStage, options: newOpts}); }} className="absolute top-3 right-3 w-3 h-3 text-red-900 hover:text-red-500 cursor-pointer" />
                           <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1"><label className="text-[8px] opacity-30 uppercase font-bold">Button Label</label><input value={opt.text} onChange={(e) => { const newOpts = [...editingStage.options]; newOpts[idx].text = e.target.value; setEditingStage({...editingStage, options: newOpts}); }} className="w-full bg-black border border-emerald-900 p-2 text-xs rounded-lg" /></div>
+                            <div className="space-y-1"><label className="text-[8px] opacity-30 uppercase font-bold">Button Label</label><input value={opt.text} onChange={(e) => { const newOpts = [...editingStage.options]; newOpts[idx].text = e.target.value; setEditingStage({...editingStage, options: newOpts}); }} className="w-full bg-black border border-emerald-900 p-2 text-xs rounded-lg" /></div> 
                             <div className="space-y-1"><label className="text-[8px] opacity-30 uppercase font-bold">Destination</label><select value={opt.next} onChange={(e) => { const newOpts = [...editingStage.options]; newOpts[idx].next = e.target.value; setEditingStage({...editingStage, options: newOpts}); }} className="w-full bg-black border border-emerald-900 p-2 text-xs rounded-lg">{stages.map(s => <option key={s.id} value={s.id}>{s.id}</option>)}</select></div>
                           </div>
                           <div className="grid grid-cols-3 gap-3">
-                            <div className="space-y-1"><label className="text-[8px] opacity-30 uppercase font-bold">Trait</label><input value={opt.trait} onChange={(e) => { const newOpts = [...editingStage.options]; newOpts[idx].trait = e.target.value; setEditingStage({...editingStage, options: newOpts}); }} className="w-full bg-black border border-emerald-900 p-2 text-[10px] rounded-lg" /></div>
+                            <div className="space-y-1"><label className="text-[8px] opacity-30 uppercase font-bold">Trait</label><input value={opt.trait} onChange={(e) => { const newOpts = [...editingStage.options]; newOpts[idx].trait = e.target.value; setEditingStage({...editingStage, options: newOpts}); }} className="w-full bg-black border border-emerald-900 p-2 text-[10px] rounded-lg" /></div>  
                             <div className="space-y-1"><label className="text-[8px] opacity-30 uppercase font-bold">Stability</label><input type="number" value={opt.stabilityImpact || 0} onChange={(e) => { const newOpts = [...editingStage.options]; newOpts[idx].stabilityImpact = parseInt(e.target.value); setEditingStage({...editingStage, options: newOpts}); }} className="w-full bg-black border border-emerald-900 p-2 text-[10px] rounded-lg" /></div>
                             <div className="space-y-1"><label className="text-[8px] opacity-30 uppercase font-bold">Requirement (Trait:Min)</label><div className="flex gap-1"><input placeholder="trait" value={opt.requirement?.trait || ''} onChange={(e) => { const newOpts = [...editingStage.options]; newOpts[idx].requirement = { ...opt.requirement, trait: e.target.value }; setEditingStage({...editingStage, options: newOpts}); }} className="bg-black border border-emerald-900 p-2 text-[9px] rounded-lg flex-1" /><input type="number" placeholder="0" value={opt.requirement?.min || 0} onChange={(e) => { const newOpts = [...editingStage.options]; newOpts[idx].requirement = { ...opt.requirement, min: parseInt(e.target.value) }; setEditingStage({...editingStage, options: newOpts}); }} className="bg-black border border-emerald-900 p-2 text-[9px] rounded-lg w-10" /></div></div>
                           </div>
@@ -367,7 +417,7 @@ const App = () => {
 };
 
 const StatusCard = ({ label, value, color = "text-emerald-400" }) => (
-  <div className="bg-emerald-950/20 border border-emerald-900/30 p-4 rounded-xl">
+  <div className="bg-emerald-950/20 border border-emerald-900/30 p-4 rounded-xl shadow-inner">
     <div className="text-[9px] uppercase font-bold opacity-30 mb-1 tracking-widest">{label}</div>
     <div className={`font-black text-[11px] ${color} truncate`}>{value}</div>
   </div>
