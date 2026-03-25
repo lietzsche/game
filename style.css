@@ -1,5 +1,20 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+body {
+  margin: 0;
+  overflow: hidden;
+  background-color: #1a1a1a;
+  font-family: 'Noto Serif KR', serif;
+  touch-action: none;
+}
 
-/* Custom CSS utilities can go here */
+#game-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #dcdcdc; /* Base paper color */
+}
+
+canvas {
+  display: block;
+}
