@@ -98,10 +98,13 @@ export class Player {
     }
 
     update(keys) {
-        const justGuarded = keys.S.isDown && !this.isJumping;
+        const v = this.scene.virtualInput;
+        const isGuardingKey = keys.S.isDown || keys.L.isDown || v.guard;
+        const justGuarded = isGuardingKey && !this.isJumping;
+
         if (justGuarded && !this.isGuarding) {
             this.isGuarding = true;
-            this.guardFrame = 0; // Reset for parry window
+            this.guardFrame = 0;
         } else if (justGuarded) {
             this.guardFrame++;
         } else {
@@ -109,16 +112,16 @@ export class Player {
             this.guardFrame = 0;
         }
 
-        const isDashAttempt = keys.SHIFT.isDown && !this.isGuarding;
+        const isDashAttempt = (keys.SHIFT.isDown || v.dash) && !this.isGuarding;
         if (isDashAttempt && this.ink > 0) {
             this.isRunning = true;
-            this.ink = Math.max(0, this.ink - 0.5); // Drain over time or per dash
+            this.ink = Math.max(0, this.ink - 0.5);
         } else {
             this.isRunning = false;
         }
 
         if (!this.isGuarding && !this.isRunning) {
-            this.ink = Math.min(this.maxInk, this.ink + 0.2); // Passive ink regen
+            this.ink = Math.min(this.maxInk, this.ink + 0.2);
         }
 
         this.speed = this.isRunning ? this.runSpeed : (this.isGuarding ? this.walkSpeed * 0.4 : this.walkSpeed);
@@ -128,12 +131,22 @@ export class Player {
 
         let isMoving = false;
         if (!this.isAttacking) {
-            if (keys.D.isDown) { this.scene.worldX += this.speed; this.dir = 1; isMoving = true; }
-            else if (keys.A.isDown) { if (this.scene.worldX > 0) this.scene.worldX -= this.speed; this.dir = -1; isMoving = true; }
+            if (keys.D.isDown || v.right) { this.scene.worldX += this.speed; this.dir = 1; isMoving = true; }
+            else if (keys.A.isDown || v.left) { if (this.scene.worldX > 0) this.scene.worldX -= this.speed; this.dir = -1; isMoving = true; }
 
-            if (Phaser.Input.Keyboard.JustDown(keys.W) || Phaser.Input.Keyboard.JustDown(keys.SPACE)) this.jump();
-            if (Phaser.Input.Keyboard.JustDown(keys.F)) this.attack('light');
-            if (Phaser.Input.Keyboard.JustDown(keys.R)) this.attack('heavy');
+            if (Phaser.Input.Keyboard.JustDown(keys.W) || Phaser.Input.Keyboard.JustDown(keys.SPACE) || v.jump) {
+                this.jump();
+                if(v.jump) v.jump = false; // Prevent multi-jump from touch
+            }
+            
+            if (Phaser.Input.Keyboard.JustDown(keys.F) || Phaser.Input.Keyboard.JustDown(keys.J) || v.attack) {
+                this.attack('light');
+                if(v.attack) v.attack = false;
+            }
+            if (Phaser.Input.Keyboard.JustDown(keys.R) || Phaser.Input.Keyboard.JustDown(keys.K) || v.heavy) {
+                this.attack('heavy');
+                if(v.heavy) v.heavy = false;
+            }
         }
 
         if (this.isAttacking) {

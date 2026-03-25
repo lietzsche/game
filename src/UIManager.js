@@ -89,5 +89,29 @@ export class UIManager {
                 this.graphics.fillCircle(player.x, player.y - 20, 10);
             }
         }
+
+        // Draw Virtual Buttons (Subtle Ink Blots)
+        this.drawVirtualButtons();
+    }
+
+    drawVirtualButtons() {
+        const tg = this.touchGraphics;
+        tg.clear();
+        tg.fillStyle(0x000000, 0.05);
+        
+        const w = this.width;
+        const h = this.height;
+
+        // Left Side (Move)
+        tg.fillCircle(w * 0.07, h * 0.85, 40); // Left
+        tg.fillCircle(w * 0.22, h * 0.85, 40); // Right
+
+        // Right Side (Actions)
+        tg.fillCircle(w * 0.68, h * 0.85, 35); // Guard
+        tg.fillCircle(w * 0.78, h * 0.85, 35); // Heavy
+        tg.fillCircle(w * 0.92, h * 0.85, 45); // Attack (Largest)
+        
+        tg.fillCircle(w * 0.75, h * 0.65, 35); // Dash
+        tg.fillCircle(w * 0.88, h * 0.65, 40); // Jump
     }
 }

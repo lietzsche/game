@@ -86,6 +86,36 @@ export class GameScene extends Phaser.Scene {
         this.ui.showGameOver();
     }
 
+    handlePointer(pointer, isDown) {
+        if (!this.gameState.gameActive || this.gameState.isDialogueActive) return;
+        this.resetVirtualInput();
+        
+        const { width, height } = this.scale;
+        const x = pointer.x;
+        const y = pointer.y;
+
+        // Left Side: Movement
+        if (x < width * 0.3) {
+            if (x < width * 0.15) this.virtualInput.left = true;
+            else this.virtualInput.right = true;
+        } 
+        // Right Side: Actions (Spread out)
+        else if (x > width * 0.6) {
+            if (y > height * 0.7) {
+                if (x > width * 0.85) this.virtualInput.attack = true; // Far right
+                else if (x > width * 0.72) this.virtualInput.heavy = true; // Middle right
+                else this.virtualInput.guard = true; // Inner right
+            } else {
+                if (x > width * 0.8) this.virtualInput.jump = true;
+                else this.virtualInput.dash = true;
+            }
+        }
+    }
+
+    resetVirtualInput() {
+        for (let key in this.virtualInput) this.virtualInput[key] = false;
+    }
+
     updateMap() {
         const width = this.scale.width;
         if (this.worldX + width + 1500 > this.lastMapX) {

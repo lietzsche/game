@@ -6,60 +6,32 @@
 
 *   **게임명:** Ink Warrior: Path of Zen (墨影)
 *   **주요 기술 스택:**
-    *   **Engine:** Phaser 3 (v3.80.1)
-    *   **Build Tool:** Vite
-    *   **Styling:** Tailwind CSS, PostCSS, Vanilla CSS
-    *   **Language:** JavaScript (ES Modules)
-*   **아키텍처:**
-    *   `index.html`: UI 레이어 및 게임 컨테이너 구조 정의.
-    *   `src/main.js`: Phaser 게임 인스턴스, 씬(Scene), 게임 로직, 커스텀 렌더링 로직 포함.
-    *   **특이사항:** Phaser의 물리 엔진(Arcade Physics)을 설정했으나, 실제 이동 및 충돌 로직은 정밀한 제어를 위해 `main.js` 내에서 커스텀하게 구현되어 있습니다.
+    *   **Engine:** Phaser 3 (v3.80.1, WebGL Renderer)
+    *   **Visuals:** 커스텀 WebGL 셰이더 (Paper Texture & Vignette)
+    *   **Architecture:** 기능별 모듈화 (Player, Enemy, Effect, UI)
+*   **핵심 철학:** 거추장스러운 라이브러리(Tailwind, Physics 엔진)를 제거하고 직접 구현한 커스텀 로직으로 가볍고 정교한 액션 제공.
 
-## 주요 기능 및 메커니즘
+## 핵심 시스템
 
 1.  **전투 시스템:**
-    *   **공격:** 일반 공격(F)과 강공격(R). 일반 공격은 3단계 콤보 시스템을 가집니다.
-    *   **방어:** S 키 또는 아래 방향키로 방어 가능. 방어 시 대미지가 대폭 감소합니다.
-    *   **이동:** WASD 및 방향키 지원. Shift 키로 달리기 가능.
-2.  **적 유닛:**
-    *   **Ghoul:** 일반적인 적.
-    *   **Oni:** 높은 체력과 강한 공격력을 가진 정예 적.
-    *   **Shadow:** 빠른 속도를 가진 적.
-3.  **지형 및 장애물:**
-    *   `getTerrainY` 함수를 통해 동적으로 지형 높낮이를 계산합니다.
-    *   가시(Spikes)와 같은 장애물이 동적으로 생성됩니다.
-4.  **스토리 시스템:**
-    *   플레이어의 이동 거리(`worldX`)에 따라 대화 상자(`dialogue-box`)가 활성화되며 스토리가 진행됩니다.
-5.  **시각 효과:**
-    *   수묵화 느낌을 내기 위한 입자(Particles), 먹물 자국(Ink Blots), 잔상(Ghosts), 화면 흔들림(Screenshake) 효과가 커스텀 그래픽스로 구현되어 있습니다.
+    *   **공격:** 일반 공격(F/J) 및 강공격(R/K). 콤보 시스템 포함.
+    *   **먹물(Ink) 게이지:** 대시와 강공격 시 소모. 대기 시 회복.
+    *   **패링(Parry):** 방어(S/L) 직후 적과 접촉 시 발동. 대미지 무효화, 적 밀쳐내기, 먹물 30 회복.
+2.  **조작계 (Multi-Input):**
+    *   **Keyboard:** 왼손(WASD)과 오른손(JKL)을 분리하여 쾌적한 조작 지원.
+    *   **Touch:** 화면 좌측(이동)과 우측(액션)을 분리한 캔버스 기반 가상 버튼 시스템.
+3.  **시각 효과:**
+    *   `PaperPipeline`: WebGL 기반 종이 질감 및 노이즈 효과.
+    *   `EffectManager`: 수묵화 스타일의 파티클, 잔상, 먹물 튐 효과 관리.
 
-## 실행 및 빌드 방법
+## 실행 및 빌드
 
-프로젝트 루트 디렉토리에서 다음 명령어를 사용합니다.
+*   `npm run dev`: 개발 서버 실행 (Port 3000)
+*   `npm run build`: 프로덕션 빌드
 
-*   **개발 서버 실행:**
-    ```bash
-    npm run dev
-    ```
-*   **프로젝트 빌드:**
-    ```bash
-    npm run build
-    ```
-*   **빌드 결과물 미리보기:**
-    ```bash
-    npm run preview
-    ```
+## 모듈 가이드
 
-## 개발 컨벤션
-
-*   **렌더링:** `customDraw()` 메서드에서 Phaser의 Graphics 객체를 사용하여 모든 엔티티를 직접 그립니다. 새로운 시각 효과나 유닛을 추가할 때 이 메서드를 수정해야 합니다.
-*   **상태 관리:** `gameState` 전역 객체를 통해 레벨, HP, 공격력, 스토리 진행도 등을 관리합니다.
-*   **반응형 대응:** 모바일 환경을 위해 `index.html`에 정의된 터치 컨트롤(`mobile-controls`)과 `main.js`의 `bindBtn` 메서드를 연동하여 사용합니다.
-
-## 주요 파일 구조
-
-*   `index.html`: 게임 UI(HP 바, 스토리 진행도, 대화창, 모바일 컨트롤) 레이아웃.
-*   `src/main.js`: 전체 게임 로직 (플레이어 제어, 적 AI, 충돌 판정, 커스텀 렌더링).
-*   `style.css`: 프로젝트 전반의 CSS 스타일링.
-*   `vite.config.js`: Vite 설정 (Base path, 서버 포트 등).
-*   `tailwind.config.js`: Tailwind CSS 설정.
+*   `Player.js`: 입력 처리, 상태 머신, 캐릭터 렌더링.
+*   `EnemyManager.js`: 적 AI 및 피격/패링 판정 조율.
+*   `UIManager.js`: 캔버스 기반 UI 렌더링 및 터치 버튼 시각화.
+*   `GameScene.js`: 전체 게임 상태 조율 및 배경 렌더링.
