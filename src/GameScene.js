@@ -43,7 +43,26 @@ export class GameScene extends Phaser.Scene {
             this.effectManager
         );
 
-        this.keys = this.input.keyboard.addKeys('W,A,S,D,F,R,SHIFT,SPACE');
+        this.keys = this.input.keyboard.addKeys({
+            W: Phaser.Input.Keyboard.KeyCodes.W,
+            A: Phaser.Input.Keyboard.KeyCodes.A,
+            S: Phaser.Input.Keyboard.KeyCodes.S,
+            D: Phaser.Input.Keyboard.KeyCodes.D,
+            F: Phaser.Input.Keyboard.KeyCodes.F,
+            R: Phaser.Input.Keyboard.KeyCodes.R,
+            J: Phaser.Input.Keyboard.KeyCodes.J,
+            K: Phaser.Input.Keyboard.KeyCodes.K,
+            L: Phaser.Input.Keyboard.KeyCodes.L,
+            SHIFT: Phaser.Input.Keyboard.KeyCodes.SHIFT,
+            SPACE: Phaser.Input.Keyboard.KeyCodes.SPACE
+        });
+        
+        // Virtual Input for Mobile/Touch
+        this.virtualInput = { left: false, right: false, jump: false, attack: false, heavy: false, guard: false, dash: false };
+
+        this.input.on('pointerdown', (pointer) => this.handlePointer(pointer, true));
+        this.input.on('pointermove', (pointer) => this.handlePointer(pointer, true));
+        this.input.on('pointerup', () => this.resetVirtualInput());
         
         this.input.keyboard.on('keydown-SPACE', () => {
             if (this.gameState.isDialogueActive) {

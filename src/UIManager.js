@@ -8,16 +8,20 @@ export class UIManager {
         this.graphics.setScrollFactor(0);
         this.graphics.setDepth(100);
 
+        this.touchGraphics = scene.add.graphics();
+        this.touchGraphics.setScrollFactor(0);
+        this.touchGraphics.setDepth(90);
+
         this.levelText = scene.add.text(30, 30, '墨影 LV.1', { font: 'italic bold 32px "Noto Serif KR"', fill: '#000' }).setScrollFactor(0).setDepth(100);
         this.progressText = scene.add.text(30, 85, 'Progress: 0%', { font: 'bold 12px "Noto Serif KR"', fill: '#666' }).setScrollFactor(0).setDepth(100);
-        this.controlsText = scene.add.text(30, 105, 'WASD: Move | S: Guard(Parry) | SHIFT: Dash(-Ink) | F: Attack | R: Heavy(-Ink)', { font: 'bold 10px "Noto Serif KR"', fill: '#888' }).setScrollFactor(0).setDepth(100);
+        this.controlsText = scene.add.text(30, 105, 'WASD: Move | S/L: Guard(Parry) | SHIFT: Dash | F/J: Attack | R/K: Heavy', { font: 'bold 10px "Noto Serif KR"', fill: '#888' }).setScrollFactor(0).setDepth(100);
         
         this.dialogueGroup = scene.add.group();
         this.dialogueBg = scene.add.rectangle(this.width / 2, this.height - 80, Math.min(700, this.width * 0.85), 100, 0xffffff, 0.95).setScrollFactor(0).setDepth(101).setOrigin(0.5);
         this.dialogueBg.setStrokeStyle(4, 0x000000);
         this.dialogueName = scene.add.text(this.dialogueBg.x - this.dialogueBg.width/2 + 20, this.dialogueBg.y - 35, '', { font: 'bold 20px "Noto Serif KR"', fill: '#000' }).setScrollFactor(0).setDepth(102);
         this.dialogueText = scene.add.text(this.dialogueBg.x - this.dialogueBg.width/2 + 20, this.dialogueBg.y - 5, '', { font: '18px "Noto Serif KR"', fill: '#333' }).setScrollFactor(0).setDepth(102);
-        this.dialoguePrompt = scene.add.text(this.dialogueBg.x + this.dialogueBg.width/2 - 20, this.dialogueBg.y + 30, 'Press Space', { font: 'bold 12px Arial', fill: '#888' }).setOrigin(1, 0.5).setScrollFactor(0).setDepth(102);
+        this.dialoguePrompt = scene.add.text(this.dialogueBg.x + this.dialogueBg.width/2 - 20, this.dialogueBg.y + 30, 'Press SPACE', { font: 'bold 12px Arial', fill: '#888' }).setOrigin(1, 0.5).setScrollFactor(0).setDepth(102);
         
         this.dialogueGroup.addMultiple([this.dialogueBg, this.dialogueName, this.dialogueText, this.dialoguePrompt]);
         this.dialogueGroup.setVisible(false);
